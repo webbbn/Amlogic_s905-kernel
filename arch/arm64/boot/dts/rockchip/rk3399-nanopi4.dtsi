@@ -517,6 +517,7 @@
 		clock-names = "mclk";
 		pinctrl-names = "default";
 //		pinctrl-0 = <&i2s0_8ch_bus>;
+		spk-con-gpio = <&gpio0 RK_PB3 GPIO_ACTIVE_HIGH>;
 		#sound-dai-cells = <0>;
 		status = "okay";
 	};
