@@ -48,7 +48,7 @@
 	};
 
 	/* switched by pmic_sleep */
-	vcc1v8_s3: vcca1v8_s3: vcc1v8-s3 {
+	vcc1v8_s3: vcc1v8-s3 {
 		compatible = "regulator-fixed";
 		regulator-always-on;
 		regulator-boot-on;
@@ -69,6 +69,27 @@
 		regulator-max-microvolt = <3000000>;
 		regulator-name = "vcc3v0_sd";
 		vin-supply = <&vcc3v3_sys>;
+	};
+
+	/*
+	 * Really, this is supplied by vcc_1v8, and vcc1v8_s3 only
+	 * drives the enable pin, but we can't quite model that.
+	 */
+	vcca0v9_s3: vcca0v9-s3 {
+		compatible = "regulator-fixed";
+		regulator-min-microvolt = <900000>;
+		regulator-max-microvolt = <900000>;
+		regulator-name = "vcca0v9_s3";
+		vin-supply = <&vcc1v8_s3>;
+	};
+
+	/* As above, actually supplied by vcc3v3_sys */
+	vcca1v8_s3: vcca1v8-s3 {
+		compatible = "regulator-fixed";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-name = "vcca1v8_s3";
+		vin-supply = <&vcc1v8_s3>;
 	};
 
 	vbus_typec: vbus-typec {
@@ -115,60 +136,25 @@
 	};
 
 	rt5651-sound {
-		status = "okay";
 		compatible = "simple-audio-card";
-		pinctrl-names = "default";
-		pinctrl-0 = <&hp_det>;
-
-		simple-audio-card,format = "i2s";
 		simple-audio-card,name = "realtek,rt5651-codec";
+		simple-audio-card,format = "i2s";
 		simple-audio-card,mclk-fs = <256>;
-		simple-audio-card,hp-det-gpio = <&gpio4 28 GPIO_ACTIVE_HIGH>;
 		simple-audio-card,widgets =
 			"Microphone", "Mic Jack",
 			"Headphone", "Headphone Jack";
 		simple-audio-card,routing =
-			"Mic Jack", "MIC1",
-			"IN1P", "Mic Jack",
 			"Headphone Jack", "HPOL",
-			"Headphone Jack", "HPOR";
+			"Headphone Jack", "HPOR",
+			"Mic Jack", "MIC1";
 		simple-audio-card,cpu {
-			sound-dai = <&i2s1>;
+			sound-dai = <&i2s0>;
 		};
 		simple-audio-card,codec {
 			sound-dai = <&rt5651>;
 		};
 	};
 
-/* fredly 4
-	rt5651_card: rt5651-sound {
-		status = "okay";
-		compatible = "simple-audio-card";
-		pinctrl-names = "default";
-		pinctrl-0 = <&hp_det>;
-
-		simple-audio-card,name = "realtek,rt5651-codec";
-		simple-audio-card,format = "i2s";
-		simple-audio-card,mclk-fs = <256>;
-		simple-audio-card,hp-det-gpio = <&gpio4 28 GPIO_ACTIVE_HIGH>;
-
-		simple-audio-card,widgets =
-			"Microphone", "Mic Jack",
-			"Headphone", "Headphone Jack";
-		simple-audio-card,routing =
-			"Mic Jack", "MICBIAS1",
-			"IN1P", "Mic Jack",
-			"Headphone Jack", "HPOL",
-			"Headphone Jack", "HPOR";
-
-		simple-audio-card,cpu {
-			sound-dai = <&i2s1>;
-		};
-		simple-audio-card,codec {
-			sound-dai = <&rt5651>;
-		};
-};
-*/
 	spdif-sound {
 		status = "okay";
 		compatible = "simple-audio-card";
@@ -505,30 +491,10 @@
 };
 
 &i2c1 {
-	status = "okay";
+	clock-frequency = <200000>;
 	i2c-scl-rising-time-ns = <150>;
 	i2c-scl-falling-time-ns = <30>;
-	clock-frequency = <200000>;
-
-	rt5651: rt5651@1a {
-		compatible = "rockchip,rt5651";
-		reg = <0x1a>;
-		clocks = <&cru SCLK_I2S_8CH_OUT>;
-		clock-names = "mclk";
-		pinctrl-names = "default";
-//		pinctrl-0 = <&i2s0_8ch_bus>;
-		spk-con-gpio = <&gpio0 RK_PB3 GPIO_ACTIVE_HIGH>;
-		#sound-dai-cells = <0>;
-		status = "okay";
-	};
-};
-
-/* frend 4
-&i2c1 {
 	status = "okay";
-	i2c-scl-rising-time-ns = <150>;
-	i2c-scl-falling-time-ns = <30>;
-	clock-frequency = <200000>;
 
 	rt5651: rt5651@1a {
 		#sound-dai-cells = <0>;
@@ -537,11 +503,10 @@
 		clocks = <&cru SCLK_I2S_8CH_OUT>;
 		clock-names = "mclk";
 		pinctrl-names = "default";
-		pinctrl-0 = <&i2s_8ch_mclk>;
+		pinctrl-0 = <&i2s0_8ch_bus>;
 		status = "okay";
 	};
 };
-*/
 
 &i2c2 {
 	status = "okay";
@@ -569,45 +534,18 @@
 };
 
 &i2s0 {
-//	rockchip,i2s-broken-burst-len;
 	rockchip,playback-channels = <8>;
 	rockchip,capture-channels = <8>;
 	status = "okay";
-//	#sound-dai-cells = <0>;
 };
-
-/* frendly 4
-&i2s0 {
-	status = "okay";
-	rockchip,i2s-broken-burst-len;
-	rockchip,playback-channels = <8>;
-	rockchip,capture-channels = <8>;
-	#sound-dai-cells = <0>;
-};
-*/
 
 &i2s1 {
-	assigned-clocks = <&cru SCLK_I2SOUT_SRC>;
-	assigned-clock-parents = <&cru SCLK_I2S1_8CH>;
-	rockchip,i2s-broken-burst-len;
+//	assigned-clocks = <&cru SCLK_I2SOUT_SRC>;
+//	assigned-clock-parents = <&cru SCLK_I2S1_8CH>;
 	rockchip,playback-channels = <2>;
 	rockchip,capture-channels = <2>;
 	status = "okay";
 };
-
-/* frend 4
-&i2s1 {
-	assigned-clocks = <&cru SCLK_I2SOUT_SRC>;
-	assigned-clock-parents = <&cru SCLK_I2S1_8CH>;
-};
-&i2s1 {
-	status = "okay";
-	rockchip,i2s-broken-burst-len;
-	rockchip,playback-channels = <2>;
-	rockchip,capture-channels = <2>;
-	#sound-dai-cells = <0>;
-};
-*/
 
 &i2s2 {
 	status = "okay";
@@ -631,7 +569,9 @@
 &pcie0 {
 	ep-gpios = <&gpio2 RK_PA4 GPIO_ACTIVE_HIGH>;
 	max-link-speed = <2>;
-	num-lanes = <4>;
+	num-lanes = <2>;
+	vpcie0v9-supply = <&vcca0v9_s3>;
+	vpcie1v8-supply = <&vcca1v8_s3>;
 	status = "okay";
 };
 
@@ -675,13 +615,6 @@
 	rockchip-key {
 		power_key: power-key {
 			rockchip,pins = <0 RK_PA5 RK_FUNC_GPIO &pcfg_pull_up>;
-		};
-	};
-
-
-	headphone {
-		hp_det: hp-det {
-			rockchip,pins = <4 28 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 
@@ -770,10 +703,6 @@
 	sd-uhs-sdr104;
 	vmmc-supply = <&vcc3v0_sd>;
 	vqmmc-supply = <&vcc_sdio>;
-	status = "okay";
-};
-
-&spdif {
 	status = "okay";
 };
 
