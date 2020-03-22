@@ -2,7 +2,7 @@
 VERSION = 5
 PATCHLEVEL = 6
 SUBLEVEL = 0
-EXTRAVERSION = -rc4-arm-64
+EXTRAVERSION = -rc4
 NAME = Kleptomaniac Octopus
 
 # *DOCUMENTATION*
